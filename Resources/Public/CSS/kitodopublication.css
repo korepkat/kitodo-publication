@@ -80,12 +80,21 @@
 
 /* -- basic setup ------------------------------------------------------------------------ */
 
+.tx-dpf .hidden {
+    display: none;
+}
+
 .tx-dpf {
     position: relative;
 }
 
 .tx-dpf h2 {
-    display: none;
+     display: none;
+}
+
+.tx-dpf .document-type-list h2 {
+    font-size: 1.5rem;
+    display: block;
 }
 
 #h2-h2 {
@@ -209,6 +218,24 @@
     border-radius: 0 4px 4px 0;
 }
 
+.tx-dpf .document-form-main .form-group .form-control-consent {
+    width: 1.5em;
+}
+.tx-dpf .document-form-main .form-group-consent {
+    display: table;
+}
+
+.tx-dpf .document-form-main .form-group-consent label {
+    background: none;
+    border: none;
+    width: auto;
+}
+
+
+.tx-dpf .document-form-main .form-group-consent .alert {
+
+}
+
 .tx-dpf .form-metadata-import .form-group .form-control {
     border-radius: 4px;
 }
@@ -232,7 +259,7 @@
 }
 
 .tx-dpf .form-container button.fill_out_service_urn {
-    right: 66px;
+    right: 5px;
 }
 
 .tx-dpf .form-container button.add_field {
@@ -296,6 +323,16 @@
     width: auto;
 }
 
+.tx-dpf .unselect-licence {
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+.tx-dpf .unselect-licence:hover {
+    color: #ffffff;
+}
+
+
 .tx-dpf textarea {
     resize: vertical;
     min-height: 220px;
@@ -343,6 +380,10 @@
 
 .tx-dpf ol li {
     list-style: none;
+}
+
+.tx-dpf .document-type-list ol {
+    padding-left: 0 !important;
 }
 
 .btn-edit-discard {

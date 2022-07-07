@@ -17,9 +17,8 @@ namespace EWW\Dpf\Domain\Repository;
 /**
  * The repository for Clients
  */
-class ClientRepository extends \EWW\Dpf\Domain\Repository\AbstractRepository
+class ClientRepository extends AbstractRepository
 {
-
     /**
      * findAllByPid
      *

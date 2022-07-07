@@ -19,15 +19,12 @@ use EWW\Dpf\Domain\Model\DocumentType;
 use EWW\Dpf\Helper\InternalFormat;
 use EWW\Dpf\Security\DocumentVoter;
 use EWW\Dpf\Security\Security;
-use EWW\Dpf\Services\Transfer\DocumentTransferManager;
-use EWW\Dpf\Services\Transfer\FedoraRepository;
 use EWW\Dpf\Services\ProcessNumber\ProcessNumberGenerator;
 use EWW\Dpf\Services\Email\Notifier;
 use EWW\Dpf\Exceptions\DPFExceptionInterface;
 use EWW\Dpf\Domain\Workflow\DocumentWorkflow;
 use TYPO3\CMS\Core\Messaging\AbstractMessage;
 use EWW\Dpf\Helper\DocumentMapper;
-use EWW\Dpf\Domain\Model\File;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
@@ -103,18 +100,12 @@ class DocumentController extends AbstractController
     protected $workflow;
 
     /**
-     * documentTransferManager
+     * documentStorage
      *
-     * @var \EWW\Dpf\Services\Transfer\DocumentTransferManager $documentTransferManager
+     * @var \EWW\Dpf\Services\Storage\DocumentStorage
+     * @TYPO3\CMS\Extbase\Annotation\Inject
      */
-    protected $documentTransferManager;
-
-    /**
-     * fedoraRepository
-     *
-     * @var \EWW\Dpf\Services\Transfer\FedoraRepository $fedoraRepository
-     */
-    protected $fedoraRepository;
+    protected $documentStorage = null;
 
     /**
      * fileRepository
@@ -123,7 +114,6 @@ class DocumentController extends AbstractController
      * @TYPO3\CMS\Extbase\Annotation\Inject
      */
     protected $fileRepository = null;
-
 
     /**
      * frontendUserRepository
@@ -148,19 +138,6 @@ class DocumentController extends AbstractController
      * @TYPO3\CMS\Extbase\Annotation\Inject
      */
     protected $bookmarkRepository = null;
-
-    /**
-     * DocumentController constructor.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-
-        $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
-        $this->documentTransferManager = $objectManager->get(DocumentTransferManager::class);
-        $this->fedoraRepository = $objectManager->get(FedoraRepository::class);
-        $this->documentTransferManager->setRemoteRepository($this->fedoraRepository);
-    }
 
     /**
      * action logout of the backoffice
@@ -211,30 +188,61 @@ class DocumentController extends AbstractController
 
     /**
      * @param Document $document
-     * @param bool $acceptAll
+     * @param array $acceptedChanges
+     * @param string $acceptMode
      */
-    public function acceptSuggestionAction(\EWW\Dpf\Domain\Model\Document $document, bool $acceptAll = true) {
+    public function acceptSuggestionAction(Document $document, array $acceptedChanges = null, string $acceptMode = null) {
 
         /** @var DocumentMapper $documentMapper */
         $documentMapper = $this->objectManager->get(DocumentMapper::class);
 
-        // Existing working copy?
-        /** @var \EWW\Dpf\Domain\Model\Document $originDocument */
         $linkedUid = $document->getLinkedUid();
+        $newDocumentForm = $documentMapper->getDocumentForm($document);
+
         $originDocument = $this->documentRepository->findWorkingCopy($linkedUid);
 
         if ($originDocument) {
             $linkedDocumentForm = $documentMapper->getDocumentForm($originDocument);
         } else {
             // get remote document
-            $originDocument = $this->documentTransferManager->retrieve($document->getLinkedUid(), $this->security->getUser()->getUid());
+            $originDocument = $this->documentStorage->retrieve($document->getLinkedUid());
             $linkedDocumentForm = $documentMapper->getDocumentForm($originDocument);
         }
 
-        if ($acceptAll) {
-            // all changes are confirmed
-            // copy suggest to origin document
-            $originDocument->copy($document, true);
+        $documentChanges = $linkedDocumentForm->diff($newDocumentForm);
+
+        $acceptRestore = false;
+
+        if ($acceptMode === 'ACCEPT_ALL') {
+            $documentChanges->acceptAll();
+            $acceptRestore = true;
+        } elseif ($acceptMode === 'ACCEPT_SELECTION') {
+            if (is_array($acceptedChanges)) {
+                foreach ($acceptedChanges['changes'] as $groupId => $groupChange) {
+                    if ($groupChange['accept']) {
+                        $documentChanges->acceptGroup($groupId);
+                        if (array_key_exists('fieldChanges', $groupChange)) {
+                            foreach ($groupChange['fieldChanges'] as $fieldId => $fieldChange) {
+                                if ($fieldChange['accept']) {
+                                    $documentChanges->acceptField($groupId, $fieldId);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (array_key_exists('acceptRestore', $acceptedChanges)) {
+                    $acceptRestore = $acceptedChanges['acceptRestore'] == 1;
+                }
+            }
+        }
+
+        if ($acceptMode === 'ACCEPT_ALL' || $acceptMode === 'ACCEPT_SELECTION') {
+
+            $linkedDocumentForm->applyChanges($documentChanges);
+
+            /** @var \EWW\Dpf\Domain\Model\Document $updateDocument */
+            $originDocument = $documentMapper->getDocument($linkedDocumentForm);
 
             if ($document->getRemoteState() != DocumentWorkflow::REMOTE_STATE_NONE) {
                 if ($document->getLocalState() != DocumentWorkflow::LOCAL_STATE_IN_PROGRESS) {
@@ -250,21 +258,12 @@ class DocumentController extends AbstractController
                 }
             }
 
-            if ($originDocument->getTransferStatus() == 'RESTORE') {
+            if ($acceptRestore && $document->getTransferStatus() == 'RESTORE') {
                 if ($originDocument->getObjectIdentifier()) {
                     $originDocument->setState(DocumentWorkflow::STATE_IN_PROGRESS_ACTIVE);
                 } else {
                     $originDocument->setState(DocumentWorkflow::STATE_IN_PROGRESS_NONE);
                 }
-            }
-
-            // copy files from suggest document
-            foreach ($document->getFile() as $key => $file) {
-                $newFile = $this->objectManager->get(File::class);
-                $newFile->copy($file);
-                $newFile->setDocument($originDocument);
-                $this->fileRepository->add($newFile);
-                $originDocument->addFile($newFile);
             }
 
             $internalFormat = new InternalFormat($document->getXmlData());
@@ -281,9 +280,7 @@ class DocumentController extends AbstractController
 
             $recipients = $this->documentManager->getNewPublicationNotificationRecipients($originDocument);
             $notifier->sendMyPublicationNewNotification($originDocument, $recipients);
-
-            $notifier->sendChangedDocumentNotification($originDocument);
-
+            
             $notifier->sendSuggestionAcceptNotification($originDocument);
 
             // index the document
@@ -293,6 +290,8 @@ class DocumentController extends AbstractController
 
             // redirect to document
             $this->redirect('showDetails', 'Document', null, ['document' => $originDocument]);
+        } else {
+            throw new \Exception('Accept suggestion: Invalid accept mode.');
         }
 
         $this->redirectToDocumentList();
@@ -313,119 +312,24 @@ class DocumentController extends AbstractController
             $linkedDocumentForm = $documentMapper->getDocumentForm($linkedDocument);
         } else {
             // No existing working copy, get remote document from fedora
-            $linkedDocument = $this->documentTransferManager->retrieve($document->getLinkedUid(), $this->security->getUser()->getUid());
+
+            $linkedDocument = $this->documentStorage->retrieve($document->getLinkedUid());
             $linkedDocumentForm = $documentMapper->getDocumentForm($linkedDocument);
         }
 
         $newDocumentForm = $documentMapper->getDocumentForm($document);
-        $diff = $this->documentFormDiff($linkedDocumentForm, $newDocumentForm);
 
-        //$usernameString = $this->security->getUsername();
+        $documentChanges = $linkedDocumentForm->diff($newDocumentForm);
+
         $user = $this->frontendUserRepository->findOneByUid($document->getCreator());
-
         if ($user) {
             $usernameString = $user->getUsername();
         }
 
         $this->view->assign('documentCreator', $usernameString);
-        $this->view->assign('diff', $diff);
+
         $this->view->assign('document', $document);
-
-    }
-
-    public function documentFormDiff($docForm1, $docForm2) {
-        $returnArray = ['changed' => ['new' => [], 'old' => []], 'deleted' => [], 'added' => []];
-
-        // pages
-        foreach ($docForm1->getItems() as $keyPage => $valuePage) {
-            foreach ($valuePage as $keyRepeatPage => $valueRepeatPage) {
-
-                // groups
-                foreach ($valueRepeatPage->getItems() as $keyGroup => $valueGroup) {
-
-                    $checkFieldsForAdding = false;
-                    $valueGroupCounter = count($valueGroup);
-
-                    if ($valueGroupCounter < count($docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup])) {
-                        $checkFieldsForAdding = true;
-                    }
-
-                    foreach ($valueGroup as $keyRepeatGroup => $valueRepeatGroup) {
-
-                        // fields
-                        foreach ($valueRepeatGroup->getItems() as $keyField => $valueField) {
-                            foreach ($valueField as $keyRepeatField => $valueRepeatField) {
-
-                                $fieldCounter = count($docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup]);
-                                $valueFieldCounter = count($valueField);
-
-                                // check if group or field is not existing
-                                $notExisting = false;
-                                try {
-                                    $flag = 'page';
-                                    $value2 = $docForm2->getItems()[$keyPage];
-                                    $flag = 'group';
-                                    $value2 = $value2[$keyRepeatPage];
-                                    $value2 = $value2->getItems()[$keyGroup];
-                                    $value2 = $value2[$keyRepeatGroup]->getItems()[$keyField];
-                                    $flag = 'field';
-                                } catch (\Throwable $t) {
-                                    $notExisting = true;
-                                }
-
-                                $item = NULL;
-                                if ($flag == 'group') {
-                                    $itemExisting = $valueRepeatGroup;
-                                    $itemNew = $docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup];
-                                } else if ($flag == 'field') {
-                                    $itemExisting = $valueRepeatField;
-                                    $itemNew = $docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup][$keyRepeatGroup]->getItems()[$keyField][$keyRepeatField];
-                                }
-
-                                if ($notExisting || ($valueRepeatField->getValue() != $value2[$keyRepeatField]->getValue() && empty($value2[$keyRepeatField]->getValue()))) {
-                                    // deleted
-                                    $returnArray['deleted'][] = $itemExisting;
-
-                                } else if ($this->removeControlCharacterFromString($valueRepeatField->getValue()) != $this->removeControlCharacterFromString($value2[$keyRepeatField]->getValue())
-                                    && !empty($value2[$keyRepeatField]->getValue())) {
-
-                                    // changed
-                                    $returnArray['changed']['old'][] = $itemExisting;
-                                    $returnArray['changed']['new'][] = $itemNew;
-                                    $returnArray['changed']['groupDisplayName'] = $valueRepeatGroup->getDisplayName();
-                                }
-
-                                if ($flag == 'group') {
-                                    break 2;
-                                }
-                            }
-
-                            // check if new document form has more field items as the existing form
-                            if ($valueFieldCounter < $fieldCounter && !$checkFieldsForAdding) {
-                                // field added
-                                for ($i = count($valueField); $i < $fieldCounter;$i++) {
-                                    $returnArray['added'][] = $docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup][$keyRepeatGroup]->getItems()[$keyField][$i];
-
-                                }
-                            }
-                        }
-                    }
-
-                    // check if new document form has more group items as the existing form
-                    if ($valueGroupCounter < count($docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup])) {
-                        // group added
-                        $counter = count($docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup]);
-                        for ($i = $valueGroupCounter; $i < $counter;$i++) {
-                            $returnArray['added'][] = $docForm2->getItems()[$keyPage][$keyRepeatPage]->getItems()[$keyGroup][$i];
-                        }
-                    }
-                }
-            }
-
-        }
-
-        return $returnArray;
-
+        $this->view->assign('documentChanges', $documentChanges);
     }
 
     public function removeControlCharacterFromString($string) {
@@ -436,12 +340,14 @@ class DocumentController extends AbstractController
      * action discard
      *
      * @param \EWW\Dpf\Domain\Model\Document $document
-     * @param integer $tstamp
      * @param string $reason
+     * @param int $tstamp
      * @return void
      */
-    public function discardAction(Document $document, $tstamp, $reason = NULL)
+    public function discardAction(Document $document, string $reason = null, int $tstamp = null)
     {
+        // FIXME: Why is the parameter tstamp not used?
+
         if (!$this->authorizationChecker->isGranted(DocumentVoter::DISCARD, $document)) {
             if (
                 $this->editingLockService->isLocked(
@@ -465,12 +371,14 @@ class DocumentController extends AbstractController
      * action postpone
      *
      * @param \EWW\Dpf\Domain\Model\Document $document
-     * @param integer $tstamp
      * @param string $reason
+     * @param int $tstamp
      * @return void
      */
-    public function postponeAction(\EWW\Dpf\Domain\Model\Document $document, $tstamp, $reason = NULL)
+    public function postponeAction(Document $document, string $reason = null, int $tstamp = null)
     {
+        // FIXME: Why is the parameter tstamp not used?
+
         if (!$this->authorizationChecker->isGranted(DocumentVoter::POSTPONE, $document)) {
             if (
                 $this->editingLockService->isLocked(
@@ -713,8 +621,10 @@ class DocumentController extends AbstractController
      * @param integer $tstamp
      * @return void
      */
-    public function releasePublishAction(\EWW\Dpf\Domain\Model\Document $document, $tstamp)
+    public function releasePublishAction(\EWW\Dpf\Domain\Model\Document $document, $tstamp = null)
     {
+        // FIXME: Why is the $tstamp parameter not used ?
+
         if (!$this->authorizationChecker->isGranted(DocumentVoter::RELEASE_PUBLISH, $document)) {
             $key = 'LLL:EXT:dpf/Resources/Private/Language/locallang.xlf:document_ingest.accessDenied';
             $this->flashMessage($document, $key, AbstractMessage::ERROR);
@@ -722,7 +632,13 @@ class DocumentController extends AbstractController
             return FALSE;
         }
 
-        $this->updateDocument($document, DocumentWorkflow::TRANSITION_RELEASE_PUBLISH, null);
+        if (!$this->documentValidator->validate($document)) {
+            $key = 'LLL:EXT:dpf/Resources/Private/Language/locallang.xlf:document_release.missingValues';
+            $this->flashMessage($document, $key, AbstractMessage::ERROR);
+            $this->redirect('showDetails', 'Document', null, ['document' => $document]);
+        } else {
+            $this->updateDocument($document, DocumentWorkflow::TRANSITION_RELEASE_PUBLISH, null);
+        }
 
         /** @var Notifier $notifier */
         $notifier = $this->objectManager->get(Notifier::class);
@@ -736,8 +652,10 @@ class DocumentController extends AbstractController
      * @param integer $tstamp
      * @return void
      */
-    public function releaseActivateAction(\EWW\Dpf\Domain\Model\Document $document, $tstamp)
+    public function releaseActivateAction(\EWW\Dpf\Domain\Model\Document $document, $tstamp = null)
     {
+        // FIXME: Why is the $tstamp parameter not used ?
+
         if (!$this->authorizationChecker->isGranted(DocumentVoter::RELEASE_ACTIVATE, $document)) {
             $key = 'LLL:EXT:dpf/Resources/Private/Language/locallang.xlf:document_activate.accessDenied';
             $this->flashMessage($document, $key, AbstractMessage::ERROR);
@@ -745,8 +663,13 @@ class DocumentController extends AbstractController
             return FALSE;
         }
 
-        $this->updateDocument($document, DocumentWorkflow::TRANSITION_RELEASE_ACTIVATE, null);
-
+        if (!$this->documentValidator->validate($document)) {
+            $key = 'LLL:EXT:dpf/Resources/Private/Language/locallang.xlf:document_release.missingValues';
+            $this->flashMessage($document, $key, AbstractMessage::ERROR);
+            $this->redirect('showDetails', 'Document', null, ['document' => $document]);
+        } else {
+            $this->updateDocument($document, DocumentWorkflow::TRANSITION_RELEASE_ACTIVATE, null);
+        }
     }
 
     /**
@@ -810,10 +733,7 @@ class DocumentController extends AbstractController
             $this->redirectToDocumentList();
         }
 
-        $this->editingLockService->lock(
-            ($document->getObjectIdentifier()? $document->getObjectIdentifier() : $document->getUid()),
-            $this->security->getUser()->getUid()
-        );
+        $this->session->setCurrenDocument($document);
 
         $postponeOptions = $this->inputOptionListRepository->findOneByName($this->settings['postponeOptionListName']);
         if ($postponeOptions) {
@@ -834,6 +754,9 @@ class DocumentController extends AbstractController
                 $documentTypes[$documentType->getUid()] = $documentType->getDisplayName();
             }
         }
+
+        $suggestion = $this->documentRepository->findSuggestionByDocument($document);
+        $this->view->assign('suggestion', $suggestion);
 
         $this->view->assign('documentTypes', $documentTypes);
 
@@ -902,7 +825,16 @@ class DocumentController extends AbstractController
                 $document = $document["__identity"];
             }
 
-            $document = $this->documentManager->read($document, $this->security->getUser()->getUID());
+            $documentIdentifier = $document;
+
+            try {
+                $document = $this->documentManager->read($document, $this->security->getUser()->getUID());
+            } catch (DPFExceptionInterface $exception) {
+                $messageKey = $exception->messageLanguageKey();
+                die(LocalizationUtility::translate($messageKey, 'dpf', [$documentIdentifier]));
+            } catch (\Exception $exception) { throw $exception;
+                die(LocalizationUtility::translate('error.unexpected', 'dpf'));
+            }
 
             if (!$document) {
                 $this->redirectToDocumentList();

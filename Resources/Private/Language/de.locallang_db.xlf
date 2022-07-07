@@ -57,6 +57,18 @@
 			<source>Username</source>
 			<target>Benutzername</target>
 		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fedora_endpoint" approved="yes">
+			<source>Endpoint</source>
+			<target>Endpunkt</target>
+		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fedora_root_container" approved="yes">
+			<source>Root container</source>
+			<target>Root-Container</target>
+		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fedora_collection_namespace" approved="yes">
+			<source>Collection namespace</source>
+			<target>Kollektionsnamensraum</target>
+		</trans-unit>
 		<trans-unit id="tx_dpf_domain_model_client.library_identifier" approved="yes">
 			<source>Library identifier</source>
 			<target>Bibliothekskennung</target>
@@ -316,6 +328,10 @@
         <trans-unit id="tx_dpf_domain_model_client.source_details_xpaths" approved="yes">
             <source>Source details xpaths (Semicolon separated)</source>
             <target>Quellen-Angaben (XPath, Semikolon separiert)</target>
+        </trans-unit>
+        <trans-unit id="tx_dpf_domain_model_client.collection_xpath" approved="yes">
+            <source>Collection xpath</source>
+            <target>Kollektionen (XPath)</target>
         </trans-unit>
         <trans-unit id="tx_dpf_domain_model_client.person_author_role" approved="yes">
             <source>Person author role</source>
@@ -857,6 +873,10 @@
 			<source>file upload</source>
 			<source>Dateiupload</source>
 		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_metadataobject.input_type.licenceConsent" approved="yes">
+			<source>Licence consent</source>
+			<target>Lizenz-Einwilligung</target>
+		</trans-unit>
 		<trans-unit id="tx_dpf_domain_model_metadataobject.mandatory" approved="yes">
 			<source>Mandatory</source>
 			<target>Pflicht</target>
@@ -1128,6 +1148,10 @@
 		<trans-unit id="tx_dpf_domain_model_client.fis_mapping" approved="yes">
 			<source>FIS Mapping (json)</source>
 			<target>FIS Mapping (json)</target>
+		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fis_collections" approved="yes">
+			<source>FIS collections (comma separated list)</source>
+			<target>FIS-Kollektionen (kommagetrennte List)</target>
 		</trans-unit>
 		</body>
 	</file>

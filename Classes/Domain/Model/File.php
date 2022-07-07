@@ -14,6 +14,8 @@ namespace EWW\Dpf\Domain\Model;
  * The TYPO3 project - inspiring people to share!
  */
 
+use TYPO3\CMS\Core\Core\Environment;
+
 /**
  * File
  */
@@ -371,7 +373,7 @@ class File extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
 
         foreach ($availableProperties as $propertyName) {
             if (\TYPO3\CMS\Extbase\Reflection\ObjectAccess::isPropertySettable($newFile, $propertyName)
-                && !in_array($propertyName, array('uid','pid'))) {
+                && !in_array($propertyName, array('uid', 'pid', 'document'))) {
 
                 $propertyValue = \TYPO3\CMS\Extbase\Reflection\ObjectAccess::getProperty($fileToCopy, $propertyName);
                 \TYPO3\CMS\Extbase\Reflection\ObjectAccess::setProperty($newFile, $propertyName, $propertyValue);
@@ -401,6 +403,18 @@ class File extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
         }
 
         return $url;
+    }
+
+    /**
+     * Gets the local path url of the file.
+     *
+     * @return string
+     */
+    public function getFilePath()
+    {
+        $fileName = $this->getLink();
+        $uploadFileUrl = new \EWW\Dpf\Helper\UploadFileUrl;
+        return Environment::getPublicPath() . "/" . $uploadFileUrl->getDirectory() . "/" . $fileName;
     }
 
     /**

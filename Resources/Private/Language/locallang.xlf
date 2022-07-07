@@ -20,6 +20,15 @@
 			<trans-unit id="config.fedoraUser" approved="yes">
 				<source>Username</source>
 			</trans-unit>
+			<trans-unit id="config.fedoraEndpoint" approved="yes">
+            	<source>Endpoint</source>
+            </trans-unit>
+			<trans-unit id="config.fedoraRootContainer" approved="yes">
+				<source>Root container</source>
+			</trans-unit>
+			<trans-unit id="config.fedoraCollectionNamespace" approved="yes">
+				<source>Collection namespace</source>
+			</trans-unit>
 			<trans-unit id="config.swordCollectionNamespace" approved="yes">
 				<source>Collection namespace</source>
 			</trans-unit>
@@ -185,6 +194,9 @@
 			<trans-unit id="document_retrieve.failure" approved="yes">
 				<source>Importing dataset %s failed.</source>
 			</trans-unit>
+			<trans-unit id="document_retrieve.notFoundFailure" approved="yes">
+				<source>Importing dataset %s failed. Nothing found.</source>
+			</trans-unit>
 			<trans-unit id="document_retrieve.success" approved="yes">
 				<source>Dataset %s successfully imported.</source>
 			</trans-unit>
@@ -209,6 +221,9 @@
 			<trans-unit id="document_register.missingValues" approved="yes">
 				<source>Registering %s failed, missing Information. Please fill in all required fields.</source>
 			</trans-unit>
+			<trans-unit id="document_release.missingValues" approved="yes">
+				<source>Releasing '%s' failed, missing Information. Please fill in all required fields.</source>
+			</trans-unit>
 			<trans-unit id="document_showDetails.accessDenied" approved="yes">
 				<source>Can not show %s, access denied.</source>
 			</trans-unit>
@@ -217,6 +232,9 @@
 			</trans-unit>
 			<trans-unit id="document_suggestRestore.accessDenied" approved="yes">
 				<source>Suggesting restore of %s failed, access denied.</source>
+			</trans-unit>
+			<trans-unit id="document_suggestChange.missingValues" approved="yes">
+				<source>Suggestion for %s failed, missing Information. Please fill in all required fields.</source>
 			</trans-unit>
 			<trans-unit id="document_save.max_size_error" approved="yes">
 				<source>Maximum document size exceeded.</source>
@@ -320,6 +338,12 @@
 			<trans-unit id="form_button.discard">
 				<source>discard</source>
 			</trans-unit>
+			<trans-unit id="form_button.moreInfo">
+				<source>More info ...</source>
+			</trans-unit>
+			<trans-unit id="form_button.unselectAll">
+				<source>Deselect</source>
+			</trans-unit>
 			<trans-unit id="form_page.files">
 				<source>Files</source>
 			</trans-unit>
@@ -399,7 +423,7 @@
 				<source>Here you can submit suggestions for changes to existing records. You can upload related files and recover from discarded records. Please enter your changes directly in the appropriate fields.</source>
 			</trans-unit>
 			<trans-unit id="manager.control.suggestionFileUploadInfo">
-                <source>For data sets for which no file is available yet, you can upload a file for publication here. Please also accept the declaration of consent. It is not possible to exchange or remove existing files here. If you wish so, please contact us.</source>
+                <source>Here you can upload new or additional files for publication. It is not possible to exchange or remove existing files here. If you wish, please explain it in the comment field above.</source>
 			</trans-unit>
 			<trans-unit id="manager.control.createNewDocument">
 				<source>Add manually</source>
@@ -533,11 +557,38 @@
 			<trans-unit id="manager.confirmPostpone.messageHeader" approved="yes">
 				<source>Do you really want to postpone the document processing?</source>
 			</trans-unit>
+			<trans-unit id="manager.alertDocumentState.message" approved="yes">
+				<source><![CDATA[The status of this record has changed. Click <a href="">here</a> to update.]]></source>
+			</trans-unit>
+			<trans-unit id="manager.alertDocumentState.messageHeader" approved="yes">
+				<source>Action not possible</source>
+			</trans-unit>
+			<trans-unit id="manager.alertDocumentState.cancel" approved="yes">
+				<source>Close</source>
+			</trans-unit>
+			<trans-unit id="manager.alertDocumentLocked.message" approved="yes">
+				<source>This record is currently being edited by someone else.</source>
+			</trans-unit>
+			<trans-unit id="manager.alertDocumentLocked.messageHeader" approved="yes">
+				<source>Action not possible.</source>
+			</trans-unit>
+			<trans-unit id="manager.alertDocumentLocked.cancel" approved="yes">
+				<source>Close</source>
+			</trans-unit>
+			<trans-unit id="manager.alertUnexpected.message" approved="yes">
+				<source>An unexpected error occurred.</source>
+			</trans-unit>
+			<trans-unit id="manager.alertUnexpected.messageHeader" approved="yes">
+				<source>Action not possible.</source>
+			</trans-unit>
+			<trans-unit id="manager.alertUnexpected.cancel" approved="yes">
+				<source>Close</source>
+			</trans-unit>
 			<trans-unit id="manager.document.authors" approved="yes">
 				<source>Authors</source>
 			</trans-unit>
 			<trans-unit id="manager.document.datasetIdentifier" approved="yes">
-				<source>Dateset Identifier</source>
+				<source>Identifier</source>
 			</trans-unit>
 			<trans-unit id="manager.document.publishedDate" approved="yes">
 				<source>Published Date</source>
@@ -551,14 +602,35 @@
 			<trans-unit id="manager.document.suggestionDetails" approved="yes">
 				<source>Suggestion details.</source>
 			</trans-unit>
-			<trans-unit id="manager.document.suggestionDetails.field" approved="yes">
-				<source>Field</source>
+			<trans-unit id="manager.document.suggestionDetails.acceptAll" approved="yes">
+				<source>Accept all</source>
 			</trans-unit>
-			<trans-unit id="manager.document.suggestionDetails.before" approved="yes">
-				<source>Before</source>
+			<trans-unit id="manager.document.suggestionDetails.acceptSuggested" approved="yes">
+				<source>Accept selection</source>
 			</trans-unit>
-			<trans-unit id="manager.document.suggestionDetails.after" approved="yes">
-				<source>After</source>
+			<trans-unit id="manager.document.suggestionDetails.deleteLocallySuggestion" approved="yes">
+				<source>Reject all</source>
+			</trans-unit>
+			<trans-unit id="manager.document.suggestionDetails.add" approved="yes">
+				<source>add</source>
+			</trans-unit>
+			<trans-unit id="manager.document.suggestionDetails.change" approved="yes">
+				<source>change</source>
+			</trans-unit>
+			<trans-unit id="manager.document.suggestionDetails.remove" approved="yes">
+				<source>remove</source>
+			</trans-unit>
+			<trans-unit id="manager.document.suggestionDetails.columnGroupField" approved="yes">
+				<source>Group/Field</source>
+			</trans-unit>
+			<trans-unit id="manager.document.suggestionDetails.columnOriginal" approved="yes">
+				<source>Original</source>
+			</trans-unit>
+			<trans-unit id="manager.document.suggestionDetails.columnSuggestion" approved="yes">
+				<source>Suggestion</source>
+			</trans-unit>
+			<trans-unit id="manager.document.suggestionDetails.columnAccept" approved="yes">
+				<source>Accept</source>
 			</trans-unit>
 			<trans-unit id="manager.document.localStatus.new">
 				<source>New</source>
@@ -619,6 +691,9 @@
 			</trans-unit>
 			<trans-unit id="manager.documentDetails.cancel" approved="yes">
 				<source>Back</source>
+			</trans-unit>
+			<trans-unit id="manager.documentDetails.suggestionWarning" approved="yes">
+				<source>There is a suggestion document for this document.</source>
 			</trans-unit>
 			<trans-unit id="manager.doublet" approved="yes">
 				<source>Doublet Check</source>
@@ -720,7 +795,7 @@
 				<source>Unknown</source>
 			</trans-unit>
 			<trans-unit id="manager.workspace.universityPublication" approved="yes">
-				<source>UL publication</source>
+				<source>Institutional bibliography</source>
 			</trans-unit>
 			<trans-unit id="manager.workspace.universityPublication.tooltip" approved="yes">
 				<source>Originated from scientific work at the UL</source>
@@ -730,6 +805,18 @@
 			</trans-unit>
 			<trans-unit id="manager.workspace.creationDate">
 				<source>Created</source>
+			</trans-unit>
+			<trans-unit id="manager.workspace.creationDate.tooltip" approved="yes">
+				<source>Creation date</source>
+			</trans-unit>
+			<trans-unit id="manager.workspace.processNumber.tooltip" approved="yes">
+				<source>Process number</source>
+			</trans-unit>
+			<trans-unit id="manager.workspace.publicationType.tooltip" approved="yes">
+				<source>Publication type</source>
+			</trans-unit>
+			<trans-unit id="manager.workspace.documentState.tooltip" approved="yes">
+				<source>Workflow state</source>
 			</trans-unit>
 			<trans-unit id="manager.workspace.noTitle">
 				<source>No title</source>
@@ -793,9 +880,6 @@
 			</trans-unit>
 			<trans-unit id="manger.workspace.batch.buttonRegister" approved="yes">
 				<source>Register</source>
-			</trans-unit>
-			<trans-unit id="manger.workspace.batch.buttonExport" approved="yes">
-				<source>Export</source>
 			</trans-unit>
 			<trans-unit id="manger.workspace.batch.buttonRemove" approved="yes">
 				<source>Remove from "Workspace"</source>
@@ -993,7 +1077,7 @@
 				<source>State</source>
 			</trans-unit>
 			<trans-unit id="manager.search.searchField.universityPublication" approved="yes">
-				<source>University publication</source>
+				<source>Institutional bibliography</source>
 			</trans-unit>
 			<trans-unit id="manager.search.searchField.withFile" approved="yes">
 				<source>With file (Fulltext)</source>
@@ -1217,7 +1301,7 @@ Date: ###DATE###
 				<source>Deposit license</source>
 			</trans-unit>
 			<trans-unit id="message.suggestion_flashmessage">
-				<source>Suggestion successfully saved</source>
+				<source>Suggestion successfully saved.</source>
 			</trans-unit>
 			<trans-unit id="message.suggestion_accepted.workingcopy_info">
 				<source>Status not changed. If you want to complete the processing, choose a status ('Approved', 'Postponed' or 'Discard').</source>
@@ -1440,6 +1524,12 @@ Date: ###DATE###
 			</trans-unit>
 			<trans-unit id="tt_content.pi_flexform.searchResultsFilter.submitter" approved="yes">
 				<source>Filter Search Results by Submitter</source>
+			</trans-unit>
+			<trans-unit id="tt_content.pi_flexform.documentTypes" approved="yes">
+				<source>Document types</source>
+			</trans-unit>
+			<trans-unit id="tt_content.pi_flexform.documentTypePage" approved="yes">
+				<source>PID of the document type page</source>
 			</trans-unit>
 			<trans-unit id="tx_dpf_domain_model_document.xml_data" approved="yes">
 				<source>Xml Data</source>

@@ -22,7 +22,7 @@ $EM_CONF[$_EXTKEY] = array(
     'category'         => 'plugin',
     'author'           => 'effective WEBWORK GmbH',
     'author_email'     => 'info@effective-webwork.de',
-    'state'            => 'beta',
+    'state'            => 'stable',
     'internal'         => '',
     'uploadfolder'     => '1',
     'createDirs'       => 'uploads/tx_dpf',
@@ -31,6 +31,7 @@ $EM_CONF[$_EXTKEY] = array(
     'constraints'      => array(
         'depends'   => array(
             'typo3' => '9.5.0-9.5.99',
+            'vhs'   => '6.0.5',
         ),
         'conflicts' => array(
         ),

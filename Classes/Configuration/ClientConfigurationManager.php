@@ -15,6 +15,7 @@ namespace EWW\Dpf\Configuration;
  */
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use EWW\Dpf\Domain\Model\Client;
 use TYPO3\CMS\Extbase\Configuration\BackendConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
@@ -24,6 +25,8 @@ use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 
 class ClientConfigurationManager
 {
+    // FIXME Make Fedora https connection scheme configurable
+
     /**
      * settings
      *
@@ -69,6 +72,10 @@ class ClientConfigurationManager
                 ConfigurationManagerInterface::CONFIGURATION_TYPE_SETTINGS
             );
 
+        }
+
+        if (Client::$storagePid > 0) {
+            $this->setConfigurationPid(Client::$storagePid);
         }
 
         $this->extensionConfiguration = GeneralUtility::makeInstance(
@@ -119,26 +126,6 @@ class ClientConfigurationManager
         return $this->getSetting("ownerId");
     }
 
-    public function getSwordHost()
-    {
-        return $this->getSetting("swordHost", "swordHost");
-    }
-
-    public function getSwordUser()
-    {
-        return $this->getSetting("swordUser", "swordUser");
-    }
-
-    public function getSwordPassword()
-    {
-        return $this->getSetting("swordPassword", "swordPassword");
-    }
-
-    public function getSwordCollectionNamespace()
-    {
-        return $this->getSetting("swordCollectionNamespace", "swordCollectionNamespace");
-    }
-
     public function getFedoraHost()
     {
         return $this->getSetting("fedoraHost", "fedoraHost");
@@ -152,6 +139,21 @@ class ClientConfigurationManager
     public function getFedoraPassword()
     {
         return $this->getSetting("fedoraPassword", "fedoraPassword");
+    }
+
+    public function getFedoraEndpoint()
+    {
+        return $this->getSetting("fedoraEndpoint", "fedoraEndpoint");
+    }
+
+    public function getFedoraRootContainer()
+    {
+        return $this->getSetting("fedoraRootContainer", "fedoraRootContainer");
+    }
+
+    public function getFedraCollectionNamespace()
+    {
+        return $this->getSetting("fedoraCollectionNamespace", "fedoraCollectionNamespace");
     }
 
     public function getElasticSearchHost()
@@ -189,6 +191,7 @@ class ClientConfigurationManager
         return $this->getSetting("fileXpath", "fileXpath");
     }
 
+    // TODO: deprecated
     public function getStateXpath()
     {
         return $this->getSetting("stateXpath", "stateXpath");
@@ -269,11 +272,13 @@ class ClientConfigurationManager
         return $this->getSetting("creationDateXpath", "creationDateXpath");
     }
 
+    // TODO: deprecated
     public function getRepositoryCreationDateXpath()
     {
         return $this->getSetting("repositoryCreationDateXpath", "repositoryCreationDateXpath");
     }
 
+    // TODO: deprecated
     public function getRepositoryLastModDateXpath()
     {
         return $this->getSetting("repositoryLastModDateXpath", "repositoryLastModDateXpath");
@@ -354,7 +359,7 @@ class ClientConfigurationManager
         return $this->getSetting("validationXpath", "validationXpath");
     }
 
-    public function fisIdXpath()
+    public function getFisIdXpath()
     {
         return $this->getSetting("fisIdXpath", "fisIdXpath");
     }
@@ -374,6 +379,12 @@ class ClientConfigurationManager
     {
         $settings = $this->getTypoScriptSettings();
         return $settings['universityCollection'];
+    }
+
+    public function isAlwaysSetDateIssued()
+    {
+        $settings = $this->getTypoScriptSettings();
+        return !empty($settings['activateAlwaysSetDateIssued']);
     }
 
     public function getTypoScriptSettings()
@@ -420,6 +431,18 @@ class ClientConfigurationManager
     public function getFileTitleXpath()
     {
         return $this->trimFileXpath($this->getSetting("fileTitleXpath", "fileTitleXpath"));
+    }
+
+    public function getCollectionXpath()
+    {
+        return $this->trimFileXpath($this->getSetting("collectionXpath", "collectionXpath"));
+    }
+
+    public function getFisCollections()
+    {
+        $fisCollectionsConfig =  $this->getSetting("fisCollections", "fisCollections");
+        $fisCollections = explode(",", $fisCollectionsConfig);
+        return array_filter($fisCollections, 'strlen' );
     }
 
     /**

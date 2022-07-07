@@ -1,5 +1,5 @@
 <?php
-namespace EWW\Dpf\Exceptions;
+namespace EWW\Dpf\Services\Api;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -14,10 +14,6 @@ namespace EWW\Dpf\Exceptions;
  * The TYPO3 project - inspiring people to share!
  */
 
-class DeleteDocumentErrorException extends \Exception implements DPFExceptionInterface
+class InvalidJson extends \Exception
 {
-    public function messageLanguageKey()
-    {
-        return 'LLL:EXT:dpf/Resources/Private/Language/locallang.xlf:document_delete.failure';
-    }
 }

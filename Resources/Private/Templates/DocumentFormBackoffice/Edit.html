@@ -17,7 +17,6 @@
 <f:layout name="Backoffice"/>
 
 <f:section name="main">
-
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom sticky-top pt-3">
 
         <f:if condition="{suggestMod}">
@@ -73,7 +72,7 @@
         <f:form.hidden id="csrfToken" property="csrfToken" value="{documentForm.csrfToken}"/>
         <f:form.hidden property="type" value="{documentForm.uid}"/>
         <f:form.hidden property="documentUid" value="{documentForm.documentUid}"/>
-        <f:form.hidden id="fedorapid" property="fedoraPid" value="{documentForm.fedoraPid}"/>
+        <f:form.hidden id="fedoraPid" property="fedoraPid" value="{documentForm.fedoraPid}"/>
         <f:form.hidden id="primaryUrn" property="primaryUrn" value="{documentForm.primaryUrn}"/>
         <f:form.hidden id="validDocument" property="validDocument" value="0"/>
         <f:form.hidden id="suggestMod" property="suggestMod" value="{suggestMod}"/>

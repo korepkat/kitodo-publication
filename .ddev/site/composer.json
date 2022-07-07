@@ -61,10 +61,6 @@
     "extra": {
         "typo3/cms": {
             "web-dir": "public"
-        },
-        "helhum/typo3-console": {
-            "comment": "This option is not needed ay more for helhum/typo3-console 5.x",
-            "install-extension-dummy": false
         }
     },
     "minimum-stability": "dev",
@@ -74,5 +70,12 @@
         "nimut/testing-framework": "^5.0",
         "phpmetrics/phpmetrics": "^2.7",
         "bmitch/churn-php": "^1.5"
+    },
+    "config": {
+        "allow-plugins": {
+            "typo3/cms-composer-installers": true,
+            "typo3/class-alias-loader": true,
+            "helhum/typo3-console-plugin": true
+        }
     }
 }

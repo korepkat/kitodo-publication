@@ -50,7 +50,6 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['scheduler']['tasks']['EWW\Dpf\Tasks\F
     ),
     // non-cacheable actions
     array(
-        'DocumentForm'     => 'list,new,create,edit,update,delete,cancel,ajaxGroup,ajaxFileGroup,ajaxField',
         'DocumentForm'     => 'list,new,create,edit,update,delete,cancel,summary,register,delete,'
             . 'ajaxGroup,ajaxFileGroup,ajaxField',
         'AjaxDocumentForm' => 'group,fileGroup,field,deleteFile,primaryUpload,secondaryUpload,fillOut,remoteFileExists',
@@ -76,11 +75,11 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['scheduler']['tasks']['EWW\Dpf\Tasks\F
     'EWW.' . $_EXTKEY,
     'Getfile',
     array(
-        'GetFile'     => 'attachment',
+        'GetFile'     => 'index, mets, dataCite, attachment, zip',
     ),
     // non-cacheable actions
     array(
-        'GetFile'     => 'attachment',
+        'GetFile'     => 'index, mets, dataCite, attachment, zip',
     )
 );
 
@@ -93,6 +92,30 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['scheduler']['tasks']['EWW\Dpf\Tasks\F
     [
         'Api' => 'list, show, create, suggestion, importDoiWithoutSaving, importPubmedWithoutSaving, importIsbnWithoutSaving, importBibtexWithoutSaving, importRisWithoutSaving, addFisId',
     ]
+);
+
+\TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+    'EWW.' . $_EXTKEY,
+    'BackofficeDocumentTypes',
+    array(
+        'DocumentType'     => 'list',
+    ),
+    // non-cacheable actions
+    array(
+        'DocumentType'     => 'list',
+    )
+);
+
+\TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+    'EWW.' . $_EXTKEY,
+    'InputAssistantDocumentTypes',
+    array(
+        'DocumentType'     => 'list',
+    ),
+    // non-cacheable actions
+    array(
+        'DocumentType'     => 'list',
+    )
 );
 
 \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
@@ -117,7 +140,7 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['scheduler']['tasks']['EWW\Dpf\Tasks\F
             .'setWorkspaceItemsPerPage, saveExtendedSearch, loadExtendedSearchList, loadExtendedSearch, '
             .'searchFis, getFisData, searchGnd, getGndData, searchRor, getRorData, searchZdb, getZdbData, searchUnpaywall, getUnpaywallData, searchOrcid, getOrcidData, '
             .'toggleBulkImportRecord, toggleBulkImportAuthorSearch, '
-            .'generateApiToken, removeApiToken',
+            .'generateApiToken, removeApiToken, isDocumentEditable',
         'Search'           => 'search, extendedSearch, batch, batchBookmark, doubletCheck, latest',
         'User'             => 'settings, saveSettings',
         'DataServiceAjax'  => 'searchGndKeyword, autocomplete',
@@ -142,13 +165,12 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['scheduler']['tasks']['EWW\Dpf\Tasks\F
             .'setWorkspaceItemsPerPage, saveExtendedSearch, loadExtendedSearchList, loadExtendedSearch, '
             .'searchFis, getFisData, searchGnd, getGndData, searchRor, getRorData, searchZdb, getZdbData, searchUnpaywall, getUnpaywallData, searchOrcid, getOrcidData, '
             .'toggleBulkImportRecord, toggleBulkImportAuthorSearch, '
-            .'generateApiToken, removeApiToken',
+            .'generateApiToken, removeApiToken, isDocumentEditable',
         'Search'           => 'search, extendedSearch, batch, batchBookmark, doubletCheck, latest',
         'User'             => 'settings, saveSettings',
         'DataServiceAjax'  => 'searchGndKeyword, autocomplete',
     )
 );
-
 
 \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPItoST43($_EXTKEY, 'Classes/Plugins/MetaTags/MetaTags.php', '_metatags', 'list_type', true);
 $overrideSetup = 'plugin.tx_dpf_metatags.userFunc = EWW\Dpf\Plugins\MetaTags\MetaTags->main';

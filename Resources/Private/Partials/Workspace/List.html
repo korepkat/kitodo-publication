@@ -100,6 +100,19 @@
 
             </th>
             </f:if>
+
+            <f:if condition="({settings.showProcessnumberColumnInLibrarianWorkspaceLists} && {dpf:IsElementAllowed(condition:'{0:\'ROLE_LIBRARIAN\'}')}) || ({settings.showProcessnumberColumnInResearcherWorkspaceLists} && {dpf:IsElementAllowed(condition:'{0:\'ROLE_RESEARCHER\'}')}">
+                <th class="xcol-md-2">
+                    {f:translate(key: 'manager.workspace.processNumber.tooltip')}
+
+                    <f:render partial="Workspace/SortColumn"
+                              arguments="{workspaceListAction: workspaceListAction, sortField: 'process_number'}"
+                    />
+
+                    <div class="workspace-filter">&nbsp;</div>
+                </th>
+            </f:if>
+
             <th class="xcol-md-2"><!-- ACTIONS --></th>
         </tr>
         </thead>
@@ -137,8 +150,10 @@
                         </f:if>
                     </f:link.action>
                     <f:if condition="{document._source.originalSourceTitle}">
-                        <br />
-                        in: <em>{document._source.originalSourceTitle}</em>
+                        <f:if condition="{document._source.originalSourceTitle} != {document._source.title.0}">
+                            <br />
+                            in: <em>{document._source.originalSourceTitle}</em>
+                        </f:if>
                     </f:if>
                     <br />
                     <dpf:showDocumentType docType="{document._source.doctype}" />
@@ -214,7 +229,7 @@
 
                 <f:if condition="{dpf:IsElementAllowed(condition:'{0:\'ROLE_LIBRARIAN\'}')}">
                     <td>
-                        <f:if condition="{document._source.collections}">
+                        <f:if condition="{dpf:inArray(needle:'{settings.universityCollection}', array:'{document._source.collections}')}">
                             <f:then>
                                 <span
                                    data-toggle="tooltip"
@@ -256,6 +271,12 @@
                                {document._source.creationDate}
                            </f:format.date>
                        </f:if>
+                    </td>
+                </f:if>
+
+                <f:if condition="({settings.showProcessnumberColumnInLibrarianWorkspaceLists} && {dpf:IsElementAllowed(condition:'{0:\'ROLE_LIBRARIAN\'}')}) || ({settings.showProcessnumberColumnInResearcherWorkspaceLists} && {dpf:IsElementAllowed(condition:'{0:\'ROLE_RESEARCHER\'}')})">
+                    <td>
+                        {document._source.process_number}
                     </td>
                 </f:if>
 

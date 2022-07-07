@@ -1,5 +1,6 @@
 <?php
-namespace EWW\Dpf\Exceptions;
+
+namespace EWW\Dpf\Services\Suggestion;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -14,10 +15,9 @@ namespace EWW\Dpf\Exceptions;
  * The TYPO3 project - inspiring people to share!
  */
 
-class RetrieveDocumentErrorException extends \Exception implements DPFExceptionInterface
+interface Change
 {
-    public function messageLanguageKey()
-    {
-        return 'LLL:EXT:dpf/Resources/Private/Language/locallang.xlf:document_retrieve.failure';
-    }
+    public function accept();
+    public function reject();
+    public function isAccepted();
 }

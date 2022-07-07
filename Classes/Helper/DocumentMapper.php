@@ -153,7 +153,7 @@ class DocumentMapper
         $fedoraPid = $document->getObjectIdentifier();
 
         if (empty($fedoraPid)) {
-            $fedoraPid = $document->getReservedObjectIdentifier();
+            $fedoraPid = $document->getProcessNumber();
         }
 
         $documentForm->setFedoraPid($fedoraPid);
@@ -227,9 +227,24 @@ class DocumentMapper
                 }
 
                 if ($groupData->length > 0) {
+
+                    $groupItemIdIndex = -1;
+
                     foreach ($groupData as $key => $data) {
 
                         $documentFormGroupItem = clone ($documentFormGroup);
+
+                        // Needed for the suggestion compare feature
+                        $groupItemId = $data->getAttribute("metadata-item-id");
+
+                        if (empty($groupItemId)) {
+                            $groupItemId = $metadataGroup->getUid() . '-' . ($groupItemIdIndex+1);
+                        } else {
+                            $groupItemIdParts = explode('-', $groupItemId);
+                            $groupItemIdIndex = $groupItemIdParts[1];
+                        }
+
+                        $documentFormGroupItem->setId($groupItemId);
 
                         foreach ($metadataGroup->getMetadataObject() as $metadataObject) {
 
@@ -256,6 +271,13 @@ class DocumentMapper
                             $depositLicense = $this->depositLicenseRepository->findByUid($metadataObject->getDepositLicense());
                             $documentFormField->setDepositLicense($depositLicense);
 
+                            if ($metadataObject->getLicenceOptions()) {
+                                $licenceOptions = $this->depositLicenseRepository->findByUidList(
+                                    explode(",", $metadataObject->getLicenceOptions())
+                                );
+                                $documentFormField->setLicenceOptions($licenceOptions);
+                            }
+
                             $documentFormField->setHelpText($metadataObject->getHelpText());
 
                             $objectMapping = "";
@@ -268,13 +290,13 @@ class DocumentMapper
                                 // ensure that e.g. <mods:detail> and <mods:detail type="volume">
                                 // are not recognized as the same node
                                 if ((strpos($value, "@") === false) && ($value != '.')) {
-                                    $objectMappingPath[$key] .= "[not(@*)]";
+                                    $objectMappingPath[$key] .= "[not(@*) or @metadata-item-id]";
                                 }
                             }
 
                             $objectMapping = implode("/", $objectMappingPath);
 
-                            if ($objectMapping == '[not(@*)]' || empty($objectMappingPath)) {
+                            if ($objectMapping == '[not(@*) or @metadata-item-id]' || empty($objectMappingPath)) {
                                 $objectMapping = '.';
                             }
 
@@ -294,6 +316,8 @@ class DocumentMapper
 
                             if ($objectData->length > 0) {
 
+                                $fieldItemIdIndex = -1;
+
                                 foreach ($objectData as $key => $value) {
 
                                     $documentFormFieldItem = clone ($documentFormField);
@@ -311,6 +335,24 @@ class DocumentMapper
                                     $objectValue = str_replace('"', "'", $objectValue);
 
                                     $documentFormFieldItem->setValue($objectValue, $metadataObject->getDefaultValue());
+
+                                    if ($value instanceof \DOMAttr) {
+                                        $documentFormFieldItem->setId($groupItemId . '-' . $metadataObject->getUid(). '-' . 0);
+                                    } else {
+                                        $fieldItemId = $value->getAttribute("metadata-item-id");
+                                        if ($objectMapping == '.') {
+                                            $fieldItemId = $groupItemId . '-' . $metadataObject->getUid(). '-' . 0;
+                                        }
+
+                                       if (empty($fieldItemId)) {
+                                           $fieldItemId = $groupItemId . '-' . $metadataObject->getUid(). '-' . ($fieldItemIdIndex + 1);
+                                       } else {
+                                           $fieldItemIdParts = explode('-', $fieldItemId);
+                                           $fieldItemIdIndex = $fieldItemIdParts[3];
+                                       }
+
+                                       $documentFormFieldItem->setId($fieldItemId);
+                                    }
 
                                     if ($metadataGroup->isFileGroup() && $metadataObject->isUploadField()) {
 
@@ -333,6 +375,7 @@ class DocumentMapper
                                     $documentFormGroupItem->addItem($documentFormFieldItem);
                                 }
                             } else {
+                                $documentFormField->setId($groupItemId . '-' . $metadataObject->getUid(). '-' . 0);
                                 $documentFormGroupItem->addItem($documentFormField);
                             }
 
@@ -343,6 +386,9 @@ class DocumentMapper
                 } else {
 
                     $documentFormGroup->setEmptyGroup(true);
+
+                    // Needed for the suggestion compare feature
+                    $documentFormGroup->setId($metadataGroup->getUid() . '-' . 0);
 
                     foreach ($metadataGroup->getMetadataObject() as $metadataObject) {
                         $documentFormField = new \EWW\Dpf\Domain\Model\DocumentFormField();
@@ -369,7 +415,18 @@ class DocumentMapper
                         $depositLicense = $this->depositLicenseRepository->findByUid($metadataObject->getDepositLicense());
                         $documentFormField->setDepositLicense($depositLicense);
 
+                        if ($metadataObject->getLicenceOptions()) {
+                            $licenceOptions = $this->depositLicenseRepository->findByUidList(
+                                explode(",", $metadataObject->getLicenceOptions())
+                            );
+                            $documentFormField->setLicenceOptions($licenceOptions);
+                        }
+
                         $documentFormField->setHelpText($metadataObject->getHelpText());
+
+                        $documentFormField->setId(
+                            $metadataGroup->getUid() . '-' . 0 . '-' . $metadataObject->getUid(). '-' . 0
+                        );
 
                         $documentFormGroup->addItem($documentFormField);
                     }
@@ -402,16 +459,19 @@ class DocumentMapper
 
         $processNumber = $document->getProcessNumber();
         if (empty($processNumber)) {
-            $processNumberGenerator = $this->objectManager->get(ProcessNumberGenerator::class);
-            $processNumber = $processNumberGenerator->getProcessNumber();
-            $document->setProcessNumber($processNumber);
+            $reservedFedoraPid = $documentForm->getReservedFedoraPid();
+            if (empty($reservedFedoraPid)) {
+                $processNumberGenerator = $this->objectManager->get(ProcessNumberGenerator::class);
+                $processNumber = $processNumberGenerator->getProcessNumber();
+                $document->setProcessNumber($processNumber);
+            } else {
+                $document->setProcessNumber($reservedFedoraPid);
+            }
         }
 
         $documentType = $this->documentTypeRepository->findByUid($documentForm->getUid());
 
         $document->setDocumentType($documentType);
-
-        $document->setReservedObjectIdentifier($documentForm->getFedoraPid());
 
         $document->setValid($documentForm->getValid());
 
@@ -479,8 +539,17 @@ class DocumentMapper
                     $fieldValueCount   = 0;
                     $defaultValueCount = 0;
                     $fieldCount        = 0;
+
+                    // ID for the metadata group, used for the suggestion feature to optimize the compare between
+                    // a suggestion and its original document.
+                   $item['attributes'][] = [
+                        'mapping' => '@metadata-item-id',
+                        'value'   => $groupItem->getId()
+                   ];
+
                     foreach ($groupItem->getItems() as $field) {
                         foreach ($field as $fieldItem) {
+
                             $fieldUid       = $fieldItem->getUid();
                             $metadataObject = $this->metadataObjectRepository->findByUid($fieldUid);
 
@@ -518,6 +587,10 @@ class DocumentMapper
                                 $formField['mapping'] = $fieldMapping;
                                 $formField['value']   = $value;
 
+                                // ID for the metadata field, used for the suggestion feature to optimize the compare between
+                                // a suggestion and its original document.
+                                $formField['id'] = $fieldItem->getId();
+
                                 if (strpos($fieldMapping, "@") === 0) {
                                     $item['attributes'][] = $formField;
                                 } else {
@@ -528,7 +601,10 @@ class DocumentMapper
                                 if ($file) {
                                     $item['values'][] = [
                                         'mapping' => $fileIdXpath,
-                                        'value'   => $file->getFileIdentifier()
+                                        'value'   => $file->getFileIdentifier(),
+                                        // ID for the metadata field, used for the suggestion feature to optimize the compare between
+                                        // a suggestion and its original document.
+                                        'id' => $groupItem->getId() . "-id-0"
                                     ];
                                 }
                             }
@@ -592,6 +668,17 @@ class DocumentMapper
      */
     protected function updateFiles(Document $document, $files)
     {
+        if ($document->isSuggestion()) {
+            if (is_array($files)) {
+                foreach ($files as $file) {
+                    $newFile = new File();
+                    $newFile = $newFile->copy($file);
+                    $document->addFile($newFile);
+                }
+            }
+            return $document;
+        }
+
         $filesToBeDeleted = [];
         foreach ($document->getFile() as $docFile) {
             $filesToBeDeleted[$docFile->getFileIdentifier()] = $docFile;

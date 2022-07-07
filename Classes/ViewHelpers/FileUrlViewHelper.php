@@ -34,8 +34,8 @@ class FileUrlViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHe
         $configurationManager = GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Configuration\\ConfigurationManager');
         $settings = $configurationManager->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT);
 
-        if (isset($settings['plugin.']['tx_dpf.']['settings.']['deliverInactiveSecretKey'])) {
-            $this->secretKey = $settings['plugin.']['tx_dpf.']['settings.']['deliverInactiveSecretKey'];
+        if (isset($settings['plugin.']['tx_dpf.']['settings.']['api.']['deliverInactiveSecretKey'])) {
+            $this->secretKey = $settings['plugin.']['tx_dpf.']['settings.']['api.']['deliverInactiveSecretKey'];
         }
     }
 
@@ -44,6 +44,7 @@ class FileUrlViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHe
         parent::initializeArguments();
 
         $this->registerArgument('uri', 'string', '', true);
+        $this->registerArgument('processNumber', 'string', '', true);
     }
 
     /**
@@ -51,13 +52,22 @@ class FileUrlViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHe
      */
     public function render()
     {
-        $uri = $this->arguments['uri'];
+        $uri = trim($this->arguments['uri']);
+        $processNumber = $this->arguments['processNumber'];
 
-        $fileUri = $this->buildFileUri($uri);
+        if (strpos(strtolower($uri), "att-") === false) {
+            if (strpos(strtolower($uri), 'http') === false ) {
+                $uploadFileUrl = new \EWW\Dpf\Helper\UploadFileUrl;
+                $uri = $uploadFileUrl->getUploadUrl() . '/' . $uri;
+            }
+            return $uri;
+        }
+
+        $fileUri = $this->buildFileUri($uri, $processNumber);
 
         // pass configured API secret key parameter to enable dissemination for inactive documents
         if (isset($this->secretKey)) {
-            $fileUri .= '?tx_dpf[deliverInactive]=' . $this->secretKey;
+            $fileUri .= '?tx_dpf_getfile[deliverInactive]=' . $this->secretKey;
         }
 
         return $fileUri;
@@ -66,21 +76,15 @@ class FileUrlViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHe
     /**
      * Construct file URI
      * @param $uri
+     * @param $processNumber
      * @return string
      */
-    protected function buildFileUri($uri)
+    protected function buildFileUri($uri, $processNumber)
     {
         $uploadFileUrl = new \EWW\Dpf\Helper\UploadFileUrl;
 
-        if (strpos(strtolower($uri), "datastreams")) {
-            $regex = '/\/(\w*:\d*)\/datastreams\/(\w*-\d*)/';
-            preg_match($regex, $uri, $treffer);
-
-            if (!empty($treffer)) {
-                $qid = $treffer[1];
-                $fid = $treffer[2];
-                $uri = $uploadFileUrl->getBaseUrl() . '/api/' . urlencode($qid) . '/attachment/' . $fid;
-            }
+        if (strpos(strtolower(trim($uri)), "att-") === 0) {
+            $uri = $uploadFileUrl->getBaseUrl() . '/api/' . urlencode($processNumber) . '/attachment/' . trim($uri);
         }
 
         $host = parse_url($uri, PHP_URL_HOST);

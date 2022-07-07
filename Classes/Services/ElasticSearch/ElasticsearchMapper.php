@@ -14,6 +14,7 @@ namespace EWW\Dpf\Services\ElasticSearch;
  * The TYPO3 project - inspiring people to share!
  */
 
+use EWW\Dpf\Domain\Model\Client;
 use EWW\Dpf\Helper\XSLTransformator;
 use TYPO3\CMS\Core\Core\Environment;
 
@@ -50,6 +51,10 @@ class ElasticsearchMapper
      */
     public function getElasticsearchJson($document)
     {
+        if (Client::$storagePid > 0) {
+            $this->clientRepository->setStoragePid(Client::$storagePid);
+        }
+
         /** @var \EWW\Dpf\Domain\Model\Client $client */
         $client = $this->clientRepository->findAll()->current();
 
@@ -66,12 +71,9 @@ class ElasticsearchMapper
         // xslt
         $xsl = new \DOMDocument;
         $xsl->load($xsltDoc);
-
-        $XSLTransformator = new XSLTransformator();
-        $transformedXml = $XSLTransformator->getTransformedOutputXML($document);
-
+        
         $xml = new \DOMDocument;
-        $xml->loadXML($transformedXml);
+        $xml->loadXML($document->getXmlData());
 
         // xslt processing
         $proc = new \XSLTProcessor;

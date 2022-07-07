@@ -44,6 +44,15 @@
 		<trans-unit id="tx_dpf_domain_model_client.fedora_user">
 			<source>Username</source>
 		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fedora_endpoint">
+			<source>Endpoint</source>
+		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fedora_root_container">
+			<source>Root container</source>
+		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fedora_collection_namespace">
+			<source>Collection namespace</source>
+		</trans-unit>
 		<trans-unit id="tx_dpf_domain_model_client.library_identifier">
 			<source>Library identifier</source>
 		</trans-unit>
@@ -235,6 +244,9 @@
         </trans-unit>
         <trans-unit id="tx_dpf_domain_model_client.source_details_xpaths" approved="yes">
             <source>Source details xpaths (Semicolon separated)</source>
+        </trans-unit>
+        <trans-unit id="tx_dpf_domain_model_client.collection_xpath" approved="yes">
+            <source>Collection xpath</source>
         </trans-unit>
         <trans-unit id="tx_dpf_domain_model_client.person_author_role" approved="yes">
             <source>Person author role</source>
@@ -638,6 +650,9 @@
 		<trans-unit id="tx_dpf_domain_model_metadataobject.input_type.fileUpload">
 			<source>file upload</source>
 		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_metadataobject.input_type.licenceConsent" approved="yes">
+			<source>Licence consent</source>
+		</trans-unit>
 		<trans-unit id="tx_dpf_domain_model_metadataobject.mandatory">
 			<source>Mandatory</source>
 		</trans-unit>
@@ -850,6 +865,9 @@
 		</trans-unit>
 		<trans-unit id="tx_dpf_domain_model_client.fis_mapping" approved="yes">
 			<source>FIS Mapping (json)</source>
+		</trans-unit>
+		<trans-unit id="tx_dpf_domain_model_client.fis_collections" approved="yes">
+			<source>Fis collections (comma separated list)</source>
 		</trans-unit>
 		</body>
 	</file>

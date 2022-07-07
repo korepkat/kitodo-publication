@@ -1,6 +1,4 @@
 <?php
-namespace EWW\Dpf\Exceptions;
-
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -14,10 +12,18 @@ namespace EWW\Dpf\Exceptions;
  * The TYPO3 project - inspiring people to share!
  */
 
-class ActivateDocumentErrorException extends \Exception implements DPFExceptionInterface
-{
-    public function messageLanguageKey()
-    {
-        return 'LLL:EXT:dpf/Resources/Private/Language/locallang.xlf:document_activate.failure';
-    }
+use EWW\Dpf\Command\IndexByDatabase;
+use EWW\Dpf\Command\IndexByFile;
+
+if (!defined('TYPO3_MODE')) {
+    die('Access denied.');
 }
+
+return [
+    'dpf:indexByFile' => [
+        'class' => IndexByFile::class
+    ],
+    'dpf:indexByDatabase' => [
+        'class' => IndexByDatabase::class
+    ],
+];

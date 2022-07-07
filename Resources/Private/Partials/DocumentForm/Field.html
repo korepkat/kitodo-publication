@@ -15,19 +15,6 @@
 {namespace s=SJBR\StaticInfoTables\ViewHelpers}
 {namespace eww=EWW\Dpf\ViewHelpers}
 
-<f:if condition="{fieldItem.consent}">
-    <div class="field-info-text">
-        <f:if condition="{eww:isValidDepositLicense(uri:'{fieldItem.value}')}">
-            <f:then>
-                <eww:getDepositLicenseText uri="{fieldItem.value}" />
-            </f:then>
-            <f:else>
-                <eww:getDepositLicenseText uri="{fieldItem.depositLicense.uri}" />
-            </f:else>
-        </f:if>
-    </div>
-</f:if>
-
 <f:if condition="{fieldItem.helpTextLong}">
     <div class="collapse" id="collapse{formPageUid}-{formGroupUid}-{groupIndex}-{fieldItem.uid}-{fieldIndex}">
         <div class="alert alert-primary" role="alert">
@@ -41,7 +28,7 @@
 
 <div class="{f:if(condition:'{fieldItem.inputField} == 200', then: 'input-group', else: 'form-group')}">
     <f:if condition="{fieldItem.validator}=='DATE'">
-        <div class="input-group datetimepicker">
+        <div class="form-group input-group datetimepicker">
     </f:if>
 
     <f:if condition="{fieldItem.fillOutService} == 'urn'">
@@ -134,10 +121,10 @@
                 <f:then>
                     <f:form.checkbox id="inp_{fieldItem.uid}"
                                      property="metadata.{formPageUid}-{formGroupUid}-{groupIndex}-{fieldItem.uid}-{fieldIndex}"
-                                     value="{fieldItem.depositLicense.uri}" class="input-field form-control input-field-checkbox"
+                                     value="yes" class="input-field form-control input-field-checkbox"
                                      additionalAttributes="{data-field:fieldItem.uid,data-index:fieldIndex,data-mandatory:fieldItem.mandatory,data-group:formGroupUid,data-groupindex:groupIndex,data-default:fieldItem.hasDefaultValue,data-validationExpression:fieldItem.validation,data-validationErrorMessage:fieldItem.validationErrorMessage,data-validator:fieldItem.validator,data-label:fieldItem.displayName,data-objecttype:fieldItem.objecttype}"
-                                     checked="{eww:isValidDepositLicense(uri:'{fieldItem.value}')}" disabled="{f:if(condition:'{eww:isValidDepositLicense(uri:\'{fieldItem.value}\')}', then: 'true', else:'')}"/>
-                    <f:if condition="{eww:isValidDepositLicense(uri: '{fieldItem.value}')}">
+                                     checked="{f:if(condition:'{fieldItem.value}', then: 'true', else:'')}" disabled="{f:if(condition:'{fieldItem.value}', then: 'true', else:'')}"/>
+                    <f:if condition="{fieldItem.value}">
                         <f:form.hidden
                                 property="metadata.{formPageUid}-{formGroupUid}-{groupIndex}-{fieldItem.uid}-{fieldIndex}"
                                 value="{fieldItem.value}"/>
@@ -188,6 +175,26 @@
         <f:case value="200">
             <f:render partial="DocumentForm/FileUploadField" arguments="{_all}"/>
         </f:case>
+        <f:case value="300">
+            <f:if condition="{document} == 0 || {document.state} == 'NEW:NONE' || {eww:isValidDepositLicense(uri:'{fieldItem.value}')} != 1">
+                <a class="btn btn-s btn-info unselect-licence">{f:translate(key: 'form_button.unselectAll')}</a>
+            </f:if>
+            <f:for each="{fieldItem.licenceOptions}" as="licenceOption" iteration="licenceIterator">
+                <f:render partial="DocumentForm/LicenceOption" arguments="{_all}"/>
+                <f:if condition="{licenceIterator.isLast}">
+                    <f:if condition="{fieldItem.value} && !{fieldItem.activeLicenceOption}">
+                        <f:alias map="{licenceOption: '{eww:getDepositLicense(uri:\'{fieldItem.value}\')}'}">
+                            <f:render partial="DocumentForm/LicenceOption" arguments="{_all}"/>
+                        </f:alias>
+                    </f:if>
+                </f:if>
+            </f:for>
+            <f:if condition="{eww:isValidDepositLicense(uri:'{fieldItem.value}')} && {document} && {document.state} != 'NEW:NONE'}">
+                <f:form.hidden
+                    property="metadata.{formPageUid}-{formGroupUid}-{groupIndex}-{fieldItem.uid}-{fieldIndex}"
+                    value="{fieldItem.value}"/>
+            </f:if>
+        </f:case>
     </f:switch>
 
     <f:if condition="{fieldIndex}">
@@ -202,6 +209,7 @@
         <button type="button" class="btn btn-secondary fill_out_service_urn input-group-addon">
             <i class="fas fa-calendar-alt"></i>
         </button>
+        </div>
     </f:if>
 </div>
 
